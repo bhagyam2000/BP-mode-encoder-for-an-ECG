@@ -35,26 +35,7 @@ begin
  if(ecgidx==3)		// For 2's complement form
  begin
  case(Bits_req)
- 4'b0001: 
- begin 
- CPEC_encoded= CPEC_encoded | sample_1[0];   // Directly take 1 bit from LSB of sample_1 and OR with initially zero assigned CPEC_encoded
- CPEC_encoded= CPEC_encoded<<1;				//left shift by 1 bit 
- CPEC_encoded= CPEC_encoded | sample_2[0];  // Repeat for all samples
- CPEC_encoded= CPEC_encoded<<1;
- CPEC_encoded= CPEC_encoded | sample_3[0];
- CPEC_encoded= CPEC_encoded<<1;
- CPEC_encoded= CPEC_encoded | sample_4[0];
- end
- 4'b0010:
-  begin 
- CPEC_encoded= CPEC_encoded | sample_1[1:0];   // Directly take 2 bits from LSB of sample_1 and OR with initially zero assigned CPEC_encoded
- CPEC_encoded= CPEC_encoded<<2;				//left shift by 2 bits 
- CPEC_encoded= CPEC_encoded | sample_2[1:0];  // Repeat for all samples
- CPEC_encoded= CPEC_encoded<<2;
- CPEC_encoded= CPEC_encoded | sample_3[1:0];
- CPEC_encoded= CPEC_encoded<<2;
- CPEC_encoded= CPEC_encoded | sample_4[1:0];
- end
+							// Removed the cases in which bits_required is less than or equal to 2 for which VEC encoder will be used
  4'b0011:
   begin 
  CPEC_encoded= CPEC_encoded | sample_1[2:0];   // Directly take 3 bits from LSB of sample_1 and OR with initially zero assigned CPEC_encoded
@@ -135,7 +116,11 @@ begin
  CPEC_encoded= CPEC_encoded<<10;
  CPEC_encoded= CPEC_encoded | sample_4[9:0];
  end
- default: CPEC_encoded=0;
+ default:
+ begin
+ CPEC_encoded=0;
+ size_CPEC_encoded=0;
+ end
  endcase
  end
  
@@ -144,26 +129,7 @@ begin
  else			// For SM form
  begin
  case(Bits_req)
- 4'b0001: 
- begin 
- CPEC_encoded= CPEC_encoded | magnitude1[0];   // Directly take 1 bit from LSB from magnitude of sample_1 and OR with initially zero assigned CPEC_encoded
- CPEC_encoded= CPEC_encoded<<1;				//left shift by 1 bit 
- CPEC_encoded= CPEC_encoded | magnitude2[0];  // Repeat for all samples
- CPEC_encoded= CPEC_encoded<<1;
- CPEC_encoded= CPEC_encoded | magnitude3[0];
- CPEC_encoded= CPEC_encoded<<1;
- CPEC_encoded= CPEC_encoded | magnitude4[0];
- end
- 4'b0010: 
- begin 
- CPEC_encoded= CPEC_encoded | magnitude1[1:0];   // Directly take 2 bits from LSB from magnitude of sample_1 and OR with initially zero assigned CPEC_encoded
- CPEC_encoded= CPEC_encoded<<2;				//left shift by 2 bits 
- CPEC_encoded= CPEC_encoded | magnitude2[1:0];  // Repeat for all samples
- CPEC_encoded= CPEC_encoded<<2;
- CPEC_encoded= CPEC_encoded | magnitude3[1:0];
- CPEC_encoded= CPEC_encoded<<2;
- CPEC_encoded= CPEC_encoded | magnitude4[1:0];
- end
+										// Removed the cases in which bits_required is less than or equal to 2 for which VEC encoder will be used
  4'b0011: 
  begin 
  CPEC_encoded= CPEC_encoded | magnitude1[2:0];   // Directly take 3 bits from LSB from magnitude of sample_1 and OR with initially zero assigned CPEC_encoded
@@ -244,7 +210,11 @@ begin
  CPEC_encoded= CPEC_encoded<<10;
  CPEC_encoded= CPEC_encoded | magnitude4[9:0];
  end
- default: CPEC_encoded=0;
+ default:
+ begin 
+ CPEC_encoded=0;
+ size_CPEC_encoded=0;
+ end
  endcase
  end
  end
