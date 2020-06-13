@@ -337,12 +337,17 @@ end
 always@(*) 
 begin
 	
-	if(stuffing_bits_present)							// First check whether the sign part is present or not.
+	if(!stuffing_bits_present)							// First check whether the stuffing bits part is present or not.
+	
+	stuffing_bits_part=0;								// If not assign it 0.
+	
+
+	else
 	begin
 
-	stuffing_bits_part=0;
+	stuffing_bits_part=0;									// Initially assigned 0.			
 
-		case(sizeof_stuffing_bits)
+		case(sizeof_stuffing_bits)							// depending on size of stuffing bits , stuff '1' in stuffing_bits_part.
 
 		8'd0: stuffing_bits_part = 0;
 			
@@ -384,7 +389,7 @@ begin
 		
 		endcase
 			
-//* Using case structure to check the amount we need to right shift the sign bits part. *// 
+//* Using case structure to check the amount we need to right shift the stuffing bits part. *// 
 		
 		
 		case(Data_size)
@@ -498,8 +503,8 @@ begin
 		
 	end
 
-		else
-		stuffing_bits_part=0;
+		
+		
 
 end
 
@@ -515,7 +520,7 @@ end
 always@ (*) 
 begin
 
-	if(!sign_bits_present) 						// First check whether the sign part is present or not.
+	if(!sign_bits_present) 						// First check whether the sign bits part is present or not.
 	
 	sign_bits_part=0;							// If not assign sign_bits_part as 0.
 	
