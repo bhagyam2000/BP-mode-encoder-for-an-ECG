@@ -39,7 +39,7 @@
 //===================================================
 
 
-module Entropy_encoder(clk,sample_1,sample_2,sample_3,sample_4,sign_bits_in,sizeof_sign_bits_in,sizeof_stuffing_bits,ecgidx,sub_sample_info,component_idx,component_skip,underflow_prevention,encoded_ECG,sizeof_encoded_ECG,valid_op,sign_bits_out,sizeof_sign_bits_out);
+module Entropy_encoder(clk,rst,sample_1,sample_2,sample_3,sample_4,sign_bits_in,sizeof_sign_bits_in,sizeof_stuffing_bits,ecgidx,sub_sample_info,component_idx,component_skip,underflow_prevention,encoded_ECG,sizeof_encoded_ECG,valid_op,sign_bits_out,sizeof_sign_bits_out);
 
 
 //===================================================
@@ -57,7 +57,7 @@ parameter DATA_WIDTH = 10 ;						// This parameter represent width of sample inp
 //===================================================
 
 
-input clk,component_skip,underflow_prevention;
+input clk,rst,component_skip,underflow_prevention;
 
 input signed [DATA_WIDTH-1:0] sample_1,sample_2,sample_3,sample_4;
 
@@ -72,7 +72,7 @@ input [1:0] ecgidx,sub_sample_info,component_idx;
 
 output [49:0] encoded_ECG;
 
-output [5:0] sizeof_encoded_ECG;
+output [6:0] sizeof_encoded_ECG;
 
 output [3:0] sign_bits_out;
 
@@ -83,7 +83,7 @@ output valid_op;
 
 reg [49:0] encoded_ECG;
 
-reg [5:0] sizeof_encoded_ECG;
+reg [6:0] sizeof_encoded_ECG;
 
 reg [3:0] sign_bits_out;
 
@@ -112,7 +112,7 @@ wire [2:0] size_sign_bits;
 
 wire [49:0] encoded_ecg;
 
-wire [5:0] sizeof_encoded_ecg;
+wire [6:0] sizeof_encoded_ecg;
 
 
 
@@ -156,42 +156,60 @@ final_output_generator u6(Bits_req, Data_Active, Group_skip_flag,ecgidx,componen
 
 
 
-always @(posedge clk)
+always @(posedge clk, negedge rst)
 begin
 
-	
-
-	if (sizeof_encoded_ecg > 50)
+	if(!rst)
 	begin
-		
+
 	encoded_ECG <= 0;
-		
+			
 	sizeof_encoded_ECG <= 0;
-		
-	valid_op <= 0;
-		
-	sign_bits_out <= 0;
-		
-	sizeof_sign_bits_out <= 0;
-		
-	end
-
-		
-	else
-	begin
-		
-	encoded_ECG <= encoded_ecg ;
-		
-	sizeof_encoded_ECG <= sizeof_encoded_ecg;
-		
+			
 	valid_op <= 1;
-		
-	sign_bits_out <= sign_bits ;
-		
-	sizeof_sign_bits_out <= size_sign_bits;
-		
+			
+	sign_bits_out <= 0;
+			
+	sizeof_sign_bits_out <= 0;
+	
 	end
 	
+	else
+    begin
+	
+	
+		if (sizeof_encoded_ecg > 50)
+		begin
+			
+		encoded_ECG <= 0;
+			
+		sizeof_encoded_ECG <= 0;
+			
+		valid_op <= 0;
+			
+		sign_bits_out <= 0;
+			
+		sizeof_sign_bits_out <= 0;
+			
+		end
+
+			
+		else
+		begin
+			
+		encoded_ECG <= encoded_ecg ;
+			
+		sizeof_encoded_ECG <= sizeof_encoded_ecg;
+			
+		valid_op <= 1;
+			
+		sign_bits_out <= sign_bits ;
+			
+		sizeof_sign_bits_out <= size_sign_bits;
+			
+		end
+	
+	end
 
 end
 
