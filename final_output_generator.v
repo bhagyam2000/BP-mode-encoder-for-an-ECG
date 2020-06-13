@@ -4,7 +4,7 @@
 //   FILE : final_output_generator.v
 //	 WRITTEN BY: BHAGYAM GUPTA
 //   DESCRIPTION: Verilog code for a submodule which generates the final encoded ECG of 50 bits and the exact used size of it. 
-//	 DATE : 10/06/2020
+//	 DATE : 13/06/2020
 //===================================================
 
 
@@ -46,17 +46,21 @@ input [7:0] sizeof_stuffing_bits;
 
 output [49:0] encoded_ecg;
 
-output [5:0] sizeof_encoded_ecg;
+output [6:0] sizeof_encoded_ecg;
 
 
-reg [49:0] encoded_ecg, Data_part, Data_part_unary_prefix, Data_part_VEC_prefix, Data_part_VEC_suffix, stuffing_bits_part, sign_bits_part;
+reg [49:0] encoded_ecg, Data_part, Data_part_unary_prefix, Data_part_VEC_prefix, Data_part_VEC_suffix, stuffing_bits_and_sign_bits_part;
 
-reg [5:0] sizeof_encoded_ecg;
+reg [6:0] sizeof_encoded_ecg;
 
 
 wire sign_bits_present, stuffing_bits_present,VEC_or_CPEC;
 
 wire [5:0] Data_size, Sum_of_data_and_stuffing_size, Sum_of_bits_req_and_VEC_prefix_size;
+
+wire [3:0] sign_bits_size;
+
+wire [7:0] stuffing_bits_size; 
 
 reg [9:0] Unary_prefix_data;
 
@@ -83,7 +87,11 @@ assign VEC_or_CPEC = (Bits_req>2) ? 1:0;												// To check which one of CPE
 assign Data_size = (Data_Active)? ((VEC_or_CPEC) ? ( 1 + Bits_req + size_CPEC_encoded ) :  ( 1 + Bits_req + size_VEC_prefix + size_VEC_suffix )) : 0 ;			// Determining size of data part depending on Data Active signal whether VEC or CPEC used.
 
 
-assign Sum_of_data_and_stuffing_size = Data_size + sizeof_stuffing_bits ;				// Getting sum of data size and size of stuffing bits to know how much the sign bits needed to be shifted.
+assign  stuffing_bits_size = (stuffing_bits_present) ? (sizeof_stuffing_bits) : 0 ; 	// Generating size of stuffing bits after checking its presence in the ecg.
+
+assign sign_bits_size = (sign_bits_present) ? (sizeof_sign_bits_in) : 0 ;				// Generating size of sign bits after checking its presence in the ecg.
+
+assign Sum_of_data_and_stuffing_size = Data_size + stuffing_bits_size ;					// Getting sum of data size and size stuffing bits to know how much the sign bits needed to be shifted.
 
 assign Sum_of_bits_req_and_VEC_prefix_size = Bits_req + size_VEC_prefix;				// Getting sum of Bits required and size of VEC prefix to know how much the suffix part needed to be shifted in VEC coded ECG.
 
@@ -93,39 +101,22 @@ assign Sum_of_bits_req_and_VEC_prefix_size = Bits_req + size_VEC_prefix;				// G
 
 	///// MAIN BLOCK ////
 
-//* Generate three parts (Data, Stuffing_bits, and sign_bits) each of size 50 bits. *//
-//* Generating final encoded ECG using 'OR' operation for three parts (Data, Stuffing_bits, and sign_bits)  obtained in later blocks *//
-//* Getting its exact size using case structure *// 
+//* Generate two parts (Data, Stuffing_bits+sign_bits) each of size 50 bits. *//
+//* Generating final encoded ECG using 'OR' operation for two parts (Data, Stuffing_bits_and_sign_bits)  obtained in later blocks *//
+//* Generating size of encoded ecg by adding sizes of data, stuffing bits and sign bits *//
 
 
 always@ (*)
 begin
 
-sizeof_encoded_ecg = 0;
-
-encoded_ecg = Data_part | sign_bits_part | stuffing_bits_part ;					// 'OR' all three part.
 
 
-	case({Data_Active,sign_bits_present,stuffing_bits_present})				// Generating size of ECG Based on which of the three parts are active in it. 
+encoded_ecg = Data_part | stuffing_bits_and_sign_bits_part ;					// 'OR' both parts.
 
-	3'b000:sizeof_encoded_ecg = 0;
-	
-	3'b001:sizeof_encoded_ecg = sizeof_stuffing_bits;
-	
-	3'b010:sizeof_encoded_ecg = sizeof_sign_bits_in;
-	
-	3'b011:sizeof_encoded_ecg = sizeof_sign_bits_in + sizeof_stuffing_bits ;
-	
-	3'b100:sizeof_encoded_ecg = Data_size;
-	
-	3'b101:sizeof_encoded_ecg = Data_size + sizeof_stuffing_bits ;
-	
-	3'b111:sizeof_encoded_ecg = Data_size + sizeof_stuffing_bits + sizeof_sign_bits_in;
-	
-	default: sizeof_encoded_ecg =0;
+
+sizeof_encoded_ecg = Data_size + stuffing_bits_size + sign_bits_size ; 			// 	Adding all three sizes to generate size of encoded ecg. 
 
 	
-	endcase
 
 end
 
@@ -184,7 +175,7 @@ begin
 				
 				4'd9: Data_part[48:4] = {Unary_prefix_data[8:0],CPEC_encoded[35:0]};
 				
-				4'd10: Data_part[48:0] = {Unary_prefix_data[9:1],CPEC_encoded[39:0]};			
+							
 				
 				default: Data_part=0;
 
@@ -326,191 +317,8 @@ end
 
 
 
-/// BLOCK FOR OBTAINING STUFFING_BITS PART ///
 
-//* First assign the stuffing_bits data using cases for its size (starting from MSB)  *//
-//* Shift this data to the right by the amount mentioned by size of data part. Use cases for it *//
-
-
-
-
-always@(*) 
-begin
-	
-	if(!stuffing_bits_present)							// First check whether the stuffing bits part is present or not.
-	
-	stuffing_bits_part=0;								// If not assign it 0.
-	
-
-	else
-	begin
-
-	stuffing_bits_part=0;									// Initially assigned 0.			
-
-		case(sizeof_stuffing_bits)							// depending on size of stuffing bits , stuff '1' in stuffing_bits_part.
-
-		8'd0: stuffing_bits_part = 0;
-			
-		8'd1: stuffing_bits_part[49] = 1'b1;
-			
-		8'd2: stuffing_bits_part[49:48] = 2'b11;
-			
-		8'd3: stuffing_bits_part[49:47] = 3'b111;
-			
-		8'd4: stuffing_bits_part[49:46] = 4'b1111;
-			
-		8'd5: stuffing_bits_part[49:45] = 5'b11111;
-			
-		8'd6: stuffing_bits_part[49:44] = 6'b111111;
-			
-		8'd7: stuffing_bits_part[49:43] = 7'b1111111;
-			
-		8'd8: stuffing_bits_part[49:42] = 8'b11111111;
-			
-		8'd9: stuffing_bits_part[49:41] = 9'b111111111;
-			
-		8'd10: stuffing_bits_part[49:40] = 10'b1111111111;
-		
-		8'd11: stuffing_bits_part[49:39] = 11'b11111111111;
-			
-		8'd12: stuffing_bits_part[49:38] = 12'b111111111111;
-			
-		8'd13: stuffing_bits_part[49:37] = 13'b1111111111111;
-			
-		8'd14: stuffing_bits_part[49:36] = 14'b11111111111111;
-			
-		8'd15: stuffing_bits_part[49:35] = 15'b111111111111111;
-			
-		8'd16: stuffing_bits_part[49:34] = 16'b1111111111111111;
-			
-		8'd17: stuffing_bits_part[49:33] = 17'b11111111111111111;
-			
-		default: stuffing_bits_part = 0;
-		
-		endcase
-			
-//* Using case structure to check the amount we need to right shift the stuffing bits part. *// 
-		
-		
-		case(Data_size)
-		
-		6'd0: stuffing_bits_part = stuffing_bits_part>>0;
-			
-		6'd1: stuffing_bits_part = stuffing_bits_part>> 1;
-			
-		6'd2: stuffing_bits_part = stuffing_bits_part >> 2;
-			
-		6'd3: stuffing_bits_part = stuffing_bits_part >> 3;
-			
-		6'd4: stuffing_bits_part = stuffing_bits_part >> 4;
-			
-		6'd5: stuffing_bits_part = stuffing_bits_part >> 5;
-			
-		6'd6: stuffing_bits_part = stuffing_bits_part >> 6;
-			
-		6'd7: stuffing_bits_part = stuffing_bits_part >> 7;
-			
-		6'd8: stuffing_bits_part = stuffing_bits_part >> 8;
-			
-		6'd9: stuffing_bits_part = stuffing_bits_part >> 9;
-			
-		6'd10: stuffing_bits_part = stuffing_bits_part >> 10;
-			
-		6'd11: stuffing_bits_part = stuffing_bits_part >> 11;
-			
-		6'd12: stuffing_bits_part = stuffing_bits_part >> 12;
-			
-		6'd13: stuffing_bits_part = stuffing_bits_part >> 13;
-			
-		6'd14: stuffing_bits_part = stuffing_bits_part >> 14;
-			
-		6'd15: stuffing_bits_part = stuffing_bits_part >> 15;
-			
-		6'd16: stuffing_bits_part = stuffing_bits_part >> 16;
-			
-		6'd17: stuffing_bits_part = stuffing_bits_part >> 17;
-			
-		6'd18: stuffing_bits_part = stuffing_bits_part >> 18;
-			
-		6'd19: stuffing_bits_part = stuffing_bits_part >> 19;
-			
-		6'd20: stuffing_bits_part = stuffing_bits_part >> 20;
-			
-		6'd21: stuffing_bits_part = stuffing_bits_part >> 21;
-			
-		6'd22: stuffing_bits_part = stuffing_bits_part >> 22;
-			
-		6'd23: stuffing_bits_part = stuffing_bits_part >> 23;
-			
-		6'd24: stuffing_bits_part = stuffing_bits_part >> 24;
-			
-		6'd25: stuffing_bits_part = stuffing_bits_part >> 25;
-			
-		6'd26: stuffing_bits_part = stuffing_bits_part >> 26;
-			
-		6'd27: stuffing_bits_part = stuffing_bits_part >> 27;
-			
-		6'd28: stuffing_bits_part = stuffing_bits_part >> 28;
-			
-		6'd29: stuffing_bits_part = stuffing_bits_part >> 29;
-			
-		6'd30: stuffing_bits_part = stuffing_bits_part >> 30;
-			
-		6'd31: stuffing_bits_part = stuffing_bits_part >> 31;
-			
-		6'd32: stuffing_bits_part = stuffing_bits_part >> 32;
-			
-		6'd33: stuffing_bits_part = stuffing_bits_part >> 33;
-			
-		6'd34: stuffing_bits_part = stuffing_bits_part >> 34;
-			
-		6'd35: stuffing_bits_part = stuffing_bits_part >> 35;
-			
-		6'd36: stuffing_bits_part = stuffing_bits_part >> 36;
-			
-		6'd37: stuffing_bits_part = stuffing_bits_part >> 37;
-			
-		6'd38: stuffing_bits_part = stuffing_bits_part >> 38;
-			
-		6'd39: stuffing_bits_part = stuffing_bits_part >> 39;
-			
-		6'd40: stuffing_bits_part = stuffing_bits_part >> 40;
-			
-		6'd41: stuffing_bits_part = stuffing_bits_part >> 41;
-			
-		6'd42: stuffing_bits_part = stuffing_bits_part >> 42;
-		
-		6'd43: stuffing_bits_part = stuffing_bits_part >> 43;
-			
-		6'd44: stuffing_bits_part = stuffing_bits_part >> 44;
-			
-		6'd45: stuffing_bits_part = stuffing_bits_part >> 45;
-			
-		6'd46: stuffing_bits_part = stuffing_bits_part >> 46;
-			
-		6'd47: stuffing_bits_part = stuffing_bits_part >> 47;
-			
-		6'd48: stuffing_bits_part = stuffing_bits_part >> 48;
-			
-		6'd49: stuffing_bits_part = stuffing_bits_part >> 49;
-			
-		6'd50: stuffing_bits_part = stuffing_bits_part >> 50;
-			
-		default: stuffing_bits_part = stuffing_bits_part>>50;		
-			
-			
-		endcase
-		
-	end
-
-		
-		
-
-end
-
-
-
-		/// BLOCK FOR OBTAINING SIGN_BITS PART ///
+		/// BLOCK FOR OBTAINING STUFFING_BITS_AND_SIGN_BITS PART ///
 
 //* First assign the sign_bits data using cases for its size (starting from MSB)  *//
 //* Shift this data to the right by the amount mentioned by sum of data size and size of stuffing bits. Use cases for it *//
@@ -522,158 +330,156 @@ begin
 
 	if(!sign_bits_present) 						// First check whether the sign bits part is present or not.
 	
-	sign_bits_part=0;							// If not assign sign_bits_part as 0.
+	stuffing_bits_and_sign_bits_part = 0;							// If not assign stuffing_bits_and_sign_bits_part as 0.
 	
 	else
 	begin
 	
-	sign_bits_part=0;						// initially assign sign_bits_part as 0.
+	stuffing_bits_and_sign_bits_part = 0;						// initially assign stuffing_bits_and_sign_bits_part as 0.
 
-		case(sizeof_sign_bits_in)				// If it is present use case structure to get the size we need to take from input and assign it to sign_bits_part.
+		case(sizeof_sign_bits_in)				// If it is present use case structure to get the size we need to take from input and assign it to stuffing_bits_and_sign_bits_part.
 
-		4'b0000: sign_bits_part = 0;
+		4'b0000: stuffing_bits_and_sign_bits_part = 0;
 		
-		4'b0001: sign_bits_part[49] = sign_bits_in[0];
+		4'b0001: stuffing_bits_and_sign_bits_part[49] = sign_bits_in[0];
 		
-		4'b0010: sign_bits_part[49:48] = sign_bits_in[1:0];
+		4'b0010: stuffing_bits_and_sign_bits_part[49:48] = sign_bits_in[1:0];
 		
-		4'b0011: sign_bits_part[49:47] = sign_bits_in[2:0];
+		4'b0011: stuffing_bits_and_sign_bits_part[49:47] = sign_bits_in[2:0];
 		
-		4'b0100: sign_bits_part[49:46] = sign_bits_in[3:0];
+		4'b0100: stuffing_bits_and_sign_bits_part[49:46] = sign_bits_in[3:0];
 		
-		4'b0101: sign_bits_part[49:45] = sign_bits_in[4:0];
+		4'b0101: stuffing_bits_and_sign_bits_part[49:45] = sign_bits_in[4:0];
 		
-		4'b0110: sign_bits_part[49:44] = sign_bits_in[5:0];
+		4'b0110: stuffing_bits_and_sign_bits_part[49:44] = sign_bits_in[5:0];
 		
-		4'b0111: sign_bits_part[49:43] = sign_bits_in[6:0];
+		4'b0111: stuffing_bits_and_sign_bits_part[49:43] = sign_bits_in[6:0];
 		
-		4'b1000: sign_bits_part[49:42] = sign_bits_in[7:0];
+		4'b1000: stuffing_bits_and_sign_bits_part[49:42] = sign_bits_in[7:0];
 		
-		4'b1001: sign_bits_part[49:41] = sign_bits_in[8:0];
+		4'b1001: stuffing_bits_and_sign_bits_part[49:41] = sign_bits_in[8:0];
 		
-		4'b1010: sign_bits_part[49:40] = sign_bits_in[9:0];
+		4'b1010: stuffing_bits_and_sign_bits_part[49:40] = sign_bits_in[9:0];
 		
-		4'b1011: sign_bits_part[49:39] = sign_bits_in[10:0];
+		4'b1011: stuffing_bits_and_sign_bits_part[49:39] = sign_bits_in[10:0];
 		
-		4'b1100: sign_bits_part[49:38] = sign_bits_in[11:0];
+		4'b1100: stuffing_bits_and_sign_bits_part[49:38] = sign_bits_in[11:0];
 		
-		default: sign_bits_part = 0;
-
-		endcase
-	
-	
-	//* Using case structure to check the amount we need to right shift the sign bits part. *// 
-	
-	
-		case(Sum_of_data_and_stuffing_size)
-		
-		6'd0: sign_bits_part = sign_bits_part>>0;
-		
-		6'd1: sign_bits_part = sign_bits_part >> 1;						
-		
-		6'd2: sign_bits_part = sign_bits_part >> 2;
-		
-		6'd3: sign_bits_part = sign_bits_part >> 3;
-		
-		6'd4: sign_bits_part = sign_bits_part >> 4;
-		
-		6'd5: sign_bits_part = sign_bits_part >> 5;
-		
-		6'd6: sign_bits_part = sign_bits_part >> 6;
-		
-		6'd7: sign_bits_part = sign_bits_part >> 7;
-		
-		6'd8: sign_bits_part = sign_bits_part >> 8;
-		
-		6'd9: sign_bits_part = sign_bits_part >> 9;
-		
-		6'd10: sign_bits_part = sign_bits_part >> 10;
-		
-		6'd11: sign_bits_part = sign_bits_part >> 11;
-		
-		6'd12: sign_bits_part = sign_bits_part >> 12;
-		
-		6'd13: sign_bits_part = sign_bits_part >> 13;
-		
-		6'd14: sign_bits_part = sign_bits_part >> 14;
-		
-		6'd15: sign_bits_part = sign_bits_part >> 15;
-		
-		6'd16: sign_bits_part = sign_bits_part >> 16;
-		
-		6'd17: sign_bits_part = sign_bits_part >> 17;
-		
-		6'd18: sign_bits_part = sign_bits_part >> 18;
-		
-		6'd19: sign_bits_part = sign_bits_part >> 19;
-		
-		6'd20: sign_bits_part = sign_bits_part >> 20;
-		
-		6'd21: sign_bits_part = sign_bits_part >> 21;
-		
-		6'd22: sign_bits_part = sign_bits_part >> 22;
-		
-		6'd23: sign_bits_part = sign_bits_part >> 23;
-		
-		6'd24: sign_bits_part = sign_bits_part >> 24;
-		
-		6'd25: sign_bits_part = sign_bits_part >> 25;
-		
-		6'd26: sign_bits_part = sign_bits_part >> 26;
-		
-		6'd27: sign_bits_part = sign_bits_part >> 27;
-		
-		6'd28: sign_bits_part = sign_bits_part >> 28;
-		
-		6'd29: sign_bits_part = sign_bits_part >> 29;
-		
-		6'd30: sign_bits_part = sign_bits_part >> 30;
-		
-		6'd31: sign_bits_part = sign_bits_part >> 31;
-		
-		6'd32: sign_bits_part = sign_bits_part >> 32;
-		
-		6'd33: sign_bits_part = sign_bits_part >> 33;
-		
-		6'd34: sign_bits_part = sign_bits_part >> 34;
-		
-		6'd35: sign_bits_part = sign_bits_part >> 35;
-		
-		6'd36: sign_bits_part = sign_bits_part >> 36;
-		
-		6'd37: sign_bits_part = sign_bits_part >> 37;
-		
-		6'd38: sign_bits_part = sign_bits_part >> 38;
-		
-		6'd39: sign_bits_part = sign_bits_part >> 39;
-		
-		6'd40: sign_bits_part = sign_bits_part >> 40;
-		
-		6'd41: sign_bits_part = sign_bits_part >> 41;
-		
-		6'd42: sign_bits_part = sign_bits_part >> 42;
-		
-		6'd43: sign_bits_part = sign_bits_part >> 43;
-		
-		6'd44: sign_bits_part = sign_bits_part >> 44;
-		
-		6'd45: sign_bits_part = sign_bits_part >> 45;
-		
-		6'd46: sign_bits_part = sign_bits_part >> 46;
-		
-		6'd47: sign_bits_part = sign_bits_part >> 47;
-		
-		6'd48: sign_bits_part = sign_bits_part >> 48;
-		
-		6'd49: sign_bits_part = sign_bits_part >> 49;
-		
-		6'd50: sign_bits_part = sign_bits_part >> 50;
-		
-		default: sign_bits_part = sign_bits_part>>50;
+		default: stuffing_bits_and_sign_bits_part = 0;
 
 		endcase
-
 	end
+	
+	//* Using case structure to check the amount we need to right shift the sign bits part. Which will stuff it with the required amount of zero in stuffing part. *// 
+	
+	
+	case(Sum_of_data_and_stuffing_size)
+		
+	6'd0: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 0;
+		
+	6'd1: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 1;						
+		
+	6'd2: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 2;
+		
+	6'd3: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 3;
+		
+	6'd4: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 4;
+		
+	6'd5: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 5;
+		
+	6'd6: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 6;
+		
+	6'd7: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 7;
+		
+	6'd8: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 8;
+		
+	6'd9: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 9;
+		
+	6'd10: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 10;
+		
+	6'd11: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 11;
+		
+	6'd12: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 12;
+		
+	6'd13: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 13;
+		
+	6'd14: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 14;
+		
+	6'd15: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 15;
+		
+	6'd16: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 16;
+		
+	6'd17: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 17;
+		
+	6'd18: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 18;
+		
+	6'd19: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 19;
+		
+	6'd20: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 20;
+		
+	6'd21: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 21;
+		
+	6'd22: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 22;
+		
+	6'd23: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 23;
+		
+	6'd24: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 24;
+		
+	6'd25: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 25;
+		
+	6'd26: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 26;
+		
+	6'd27: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 27;
+		
+	6'd28: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 28;
+		
+	6'd29: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 29;
+		
+	6'd30: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 30;
+		
+	6'd31: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 31;
+		
+	6'd32: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 32;
+		
+	6'd33: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 33;
+		
+	6'd34: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 34;
+		
+	6'd35: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 35;
+		
+	6'd36: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 36;
+		
+	6'd37: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 37;
+		
+	6'd38: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 38;
+		
+	6'd39: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 39;
+		
+	6'd40: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 40;
+		
+	6'd41: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 41;
+		
+	6'd42: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 42;
+		
+	6'd43: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 43;
+		
+	6'd44: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 44;
+		
+	6'd45: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 45;
+		
+	6'd46: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 46;
+	
+	6'd47: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 47;
+		
+	6'd48: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 48;
+		
+	6'd49: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 49;
+		
+	6'd50: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part >> 50;
+		
+	default: stuffing_bits_and_sign_bits_part = stuffing_bits_and_sign_bits_part>>50;
+
+	endcase
 
 	
 
