@@ -152,11 +152,12 @@ final_output_generator u6(Bits_req, Data_Active, Group_skip_flag,ecgidx,componen
 //// MAIN BLOCK ///
 
 //* Sensitivity list of this block only contains Clock. Which makes it synchronised to clock. *//
+//* Synchronous reset is made available for the registers storing the final outputs. *//
 //* Check the size of the encoded ECG and if it exceeds 50 bits make all outputs zero including valid_op which will indicate that output is not valid. *//
 
 
 
-always @(posedge clk, negedge rst)
+always @(posedge clk)
 begin
 
 	if(!rst)
