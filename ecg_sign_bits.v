@@ -95,25 +95,25 @@ else
 	 
 		 4'b0001:							// indicates sample_1 is non zero rest are zero. 
 		 begin
-		 sign_bits[0] = sample_1[J-1];		// LSB of zero assigned sign_bits is given the MSB(Sign bit) of sample_1. 
+		 sign_bits[3] = sample_1[J-1];		// MSB of zero assigned sign_bits is given the MSB(Sign bit) of sample_1. 
 		 size_sign_bits = 1;
 		 end
 		 
 		 4'b0010:
 		 begin
-		 sign_bits[0] = sample_2[J-1];		// LSB of zero assigned sign_bits is given the MSB of sample_2. 
+		 sign_bits[3] = sample_2[J-1];		// MSB of zero assigned sign_bits is given the MSB of sample_2. 
 		 size_sign_bits = 1;
 		 end 
 
 		 4'b0100:
 		 begin
-		 sign_bits[0] = sample_3[J-1];		// LSB of zero assigned sign_bits is given the MSB of sample_3. 
+		 sign_bits[3] = sample_3[J-1];		// MSB of zero assigned sign_bits is given the MSB of sample_3. 
 		 size_sign_bits =1;
 		 end 
 
 		 4'b1000:
 		 begin
-		 sign_bits[0] = sample_4[J-1];		// LSB of zero assigned sign_bits is given the MSB of sample_4. 
+		 sign_bits[3] = sample_4[J-1];		// MSB of zero assigned sign_bits is given the MSB of sample_4. 
 		 size_sign_bits = 1;
 		 end  
 		 
@@ -121,43 +121,43 @@ else
 		 
 		 4'b0011:
 		 begin
-		 sign_bits[1] = sample_1[J-1];		//2nd LSB of zero assigned sign_bits is given the MSB of sample_1. 
-		 sign_bits[0] = sample_2[J-1];		// LSB of sign_bits is given the MSB of sample_2. 
+		 sign_bits[3] = sample_1[J-1];		// MSB of zero assigned sign_bits is given the MSB of sample_1. 
+		 sign_bits[2] = sample_2[J-1];		// 2nd MSB of sign_bits is given the MSB of sample_2. 
 		 size_sign_bits = 2;
 		 end
 		 
 		 4'b0101:
 		 begin
-		 sign_bits[1] = sample_1[J-1];		//2nd LSB of zero assigned sign_bits is given the MSB of sample_1. 
-		 sign_bits[0] = sample_3[J-1];		// LSB of sign_bits is given the MSB of sample_3. 
+		 sign_bits[3] = sample_1[J-1];		// MSB of zero assigned sign_bits is given the MSB of sample_1. 
+		 sign_bits[2] = sample_3[J-1];		// 2nd MSB of sign_bits is given the MSB of sample_3. 
 		 size_sign_bits = 2;
 		 end
 		 
 		 4'b1001:
 		 begin
-		 sign_bits[1] = sample_1[J-1];		//2nd LSB of zero assigned sign_bits is given the MSB of sample_1. 
-		 sign_bits[0] = sample_4[J-1];		// LSB of sign_bits is given the MSB of sample_4. 
+		 sign_bits[3] = sample_1[J-1];		// MSB of zero assigned sign_bits is given the MSB of sample_1. 
+		 sign_bits[2] = sample_4[J-1];		// 2nd MSB of sign_bits is given the MSB of sample_4. 
 		 size_sign_bits = 2;
 		 end
 		 
 		 4'b0110:
 		 begin
-		 sign_bits[1] = sample_2[J-1];		//2nd LSB of zero assigned sign_bits is given the MSB of sample_2. 
-		 sign_bits[0] = sample_3[J-1];		// LSB of sign_bits is given the MSB of sample_3. 
+		 sign_bits[3] = sample_2[J-1];		// MSB of zero assigned sign_bits is given the MSB of sample_2. 
+		 sign_bits[2] = sample_3[J-1];		// 2nd MSB of sign_bits is given the MSB of sample_3. 
 		 size_sign_bits = 2;
 		 end
 		 
 		 4'b1010:
 		 begin
-		 sign_bits[1] = sample_2[J-1];		//2nd LSB of zero assigned sign_bits is given the MSB of sample_2. 
-		 sign_bits[0] = sample_4[J-1];		// LSB of sign_bits is given the MSB of sample_4. 
+		 sign_bits[3] = sample_2[J-1];		//MSB of zero assigned sign_bits is given the MSB of sample_2. 
+		 sign_bits[2] = sample_4[J-1];		// 2nd MSB of sign_bits is given the MSB of sample_4. 
 		 size_sign_bits = 2;
 		 end
 		 
 		 4'b1100:
 		 begin
-		 sign_bits[1] = sample_3[J-1];		//2nd LSB of zero assigned sign_bits is given the MSB of sample_3. 
-		 sign_bits[0] = sample_4[J-1];		// LSB of sign_bits is given the MSB of sample_4. 
+		 sign_bits[3] = sample_3[J-1];		// MSB of zero assigned sign_bits is given the MSB of sample_3. 
+		 sign_bits[2] = sample_4[J-1];		// 2nd MSB of sign_bits is given the MSB of sample_4. 
 		 size_sign_bits = 2;
 		 end
 
@@ -165,33 +165,33 @@ else
 		 
 		 4'b0111:
 		 begin
-		 sign_bits[2] = sample_1[J-1];		//3rd LSB of zero assigned sign_bits is given the MSB of sample_1. 
-		 sign_bits[1] = sample_2[J-1];		// 2nd LSB of sign_bits is given the MSB of sample_2. 
-		 sign_bits[0] = sample_3[J-1];		// LSB of sign_bits is given the MSB of sample_3.
+		 sign_bits[3] = sample_1[J-1];		//MSB of zero assigned sign_bits is given the MSB of sample_1. 
+		 sign_bits[2] = sample_2[J-1];		// 2nd MSB of sign_bits is given the MSB of sample_2. 
+		 sign_bits[1] = sample_3[J-1];		// 3rd MSB of sign_bits is given the MSB of sample_3.
 		 size_sign_bits = 3;
 		 end
 		 
 		 4'b1011:
 		 begin
-		 sign_bits[2] = sample_1[J-1];		//3rd LSB of zero assigned sign_bits is given the MSB of sample_1. 
-		 sign_bits[1] = sample_2[J-1];		// 2nd LSB of sign_bits is given the MSB of sample_2. 
-		 sign_bits[0] = sample_4[J-1];		// LSB of sign_bits is given the MSB of sample_4.
+		 sign_bits[3] = sample_1[J-1];		// MSB of zero assigned sign_bits is given the MSB of sample_1. 
+		 sign_bits[2] = sample_2[J-1];		// 2nd MSB of sign_bits is given the MSB of sample_2. 
+		 sign_bits[1] = sample_4[J-1];		// 3rd MSB of sign_bits is given the MSB of sample_4.
 		 size_sign_bits = 3;
 		 end
 		 
 		 4'b1101:
 		 begin
-		 sign_bits[2] = sample_1[J-1];		//3rd LSB of zero assigned sign_bits is given the MSB of sample_1. 
-		 sign_bits[1] = sample_3[J-1];		// 2nd LSB of sign_bits is given the MSB of sample_3. 
-		 sign_bits[0] = sample_4[J-1];		// LSB of sign_bits is given the MSB of sample_4.
+		 sign_bits[3] = sample_1[J-1];		// MSB of zero assigned sign_bits is given the MSB of sample_1. 
+		 sign_bits[2] = sample_3[J-1];		// 2nd MSB of sign_bits is given the MSB of sample_3. 
+		 sign_bits[1] = sample_4[J-1];		// 3rd MSB of sign_bits is given the MSB of sample_4.
 		 size_sign_bits = 3;
 		 end
 		 
 		 4'b1110:
 		 begin
-		 sign_bits[2] = sample_2[J-1];		//3rd LSB of zero assigned sign_bits is given the MSB of sample_2. 
-		 sign_bits[1] = sample_3[J-1];		// 2nd LSB of sign_bits is given the MSB of sample_3. 
-		 sign_bits[0] = sample_4[J-1];		// LSB of sign_bits is given the MSB of sample_4.
+		 sign_bits[3] = sample_2[J-1];		// MSB of zero assigned sign_bits is given the MSB of sample_2. 
+		 sign_bits[2] = sample_3[J-1];		// 2nd MSB of sign_bits is given the MSB of sample_3. 
+		 sign_bits[1] = sample_4[J-1];		// 3rd MSB of sign_bits is given the MSB of sample_4.
 		 size_sign_bits = 3;
 		 end
 		 
@@ -200,7 +200,7 @@ else
 		 4'b1111:
 		 begin
 		 sign_bits[3] = sample_1[J-1];		// MSB of zero assigned sign_bits is given the MSB of sample_1. 
-		 sign_bits[2] = sample_2[J-1];		// 3rd LSB of sign_bits is given the MSB of sample_2. 
+		 sign_bits[2] = sample_2[J-1];		// 2nd MSB of sign_bits is given the MSB of sample_2. 
 		 sign_bits[1] = sample_3[J-1];		// 2nd LSB of sign_bits is given the MSB of sample_3.
 		 sign_bits[0] = sample_4[J-1];		// LSB of sign_bits is given the MSB of sample_4.
 		 size_sign_bits = 4;

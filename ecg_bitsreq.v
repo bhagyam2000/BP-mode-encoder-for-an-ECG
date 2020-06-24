@@ -43,7 +43,8 @@ reg [3:0] Bits_req;
 
 wire [3:0] SM_bits_req,TC_bits_req; 
 
-wire [J-1:0] magnitude1,magnitude2,magnitude3,magnitude4,SM_coded_sample,converted1,converted2,converted3,converted4,TC_coded_sample;
+wire [J-1:0] magnitude1,magnitude2,magnitude3,magnitude4,SM_coded_sample,converted1,converted2,converted3,converted4,TC_coded_sample,zero_bits_req;
+
 
 
 
@@ -85,8 +86,9 @@ Convert_to_negative #(J) c4(sample_4,converted4);
 assign SM_coded_sample = magnitude1 | magnitude2 | magnitude3 | magnitude4; 				// taking OR of all magnitude samples gives a coded sample data for which bits_required can be directly found in SM form.
 
 
-assign TC_coded_sample = converted1 & converted2 & converted3 & converted4; 				//taking AND of all negative converted samples gives a coded sample data for which bits_required can be directly found in TC form.
+assign TC_coded_sample = converted1 & converted2 & converted3 & converted4; 				//taking AND of all negative converted samples gives a coded sample data for which bits_required can be directly found in TC form.Except for the case when all samples are zero.
 
+assign zero_bits_req = ((sample_1 | sample_2 | sample_3 | sample_4) == 0) ? 1 : 0 ;			// check zero bits required case seperately to avoid error in TC case.
 
 // INSTANTIATION OF SUBMODULES WHICH GENERATE BITS REQUIRED OUTPUT FOR SM AND 2C FORM //
 
@@ -105,6 +107,13 @@ always@(*)
 
 begin
 
+	if (zero_bits_req)									// check if Bits required is zero 
+		
+		Bits_req = 0;									
+		
+	else
+	begin
+		
 		if (ecgidx==3)
 
 		Bits_req = TC_bits_req;							// USE 2C FORM FOR FOURTH ECG.
@@ -112,7 +121,8 @@ begin
 		else
 
 		Bits_req = SM_bits_req;							// USE SM FORM FOR OTHERS.
-
+	
+	end
 
 end
 
@@ -321,14 +331,14 @@ always@(*)
 begin 
 
 
-	if(sample[K-1] == 0) 											// checks if sample is positive
+	if(sample[K-1] == 0) 											// checks if sample is positive or zero
 	begin
 
-		 if(((sample)&(sample-1)) == 0)   							//Logic to check if the positive sample is in power of 2's.
+		 if(((sample)&(sample-1)) == 0)   							//Logic to check if the positive sample is in power of 2's. or zero.
 		 
 		 begin
 		 
-		 temp = sample + 1;  											 // if in power of 2's add 1 and then make negative. It helps in calculating correct bits_required.
+		 temp = sample + 1;  											 // if in power of 2's or zero add 1 and then make negative. It helps in calculating correct bits_required.
 		 
 		 converted = ~temp + 1 ; 										 // converts positive to negative in 2's compliment representation.
 		 
@@ -341,8 +351,8 @@ begin
 	end
 	
 	
-	else
-	converted = sample; 											 // if already negative donot convert.
+	else 
+	converted = sample; 											 // if already negative or zero donot convert.
 
 
 end
