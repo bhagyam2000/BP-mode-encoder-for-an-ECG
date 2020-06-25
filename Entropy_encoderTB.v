@@ -107,9 +107,9 @@ Entropy_encoder #(10) u(clk,rst,sample_1,sample_2,sample_3,sample_4,sign_bits_in
 initial 																			// Will execute at the beginning once
 begin
 
-$readmemb("test_cases_west.txt", test_vectors); 									// Read vectors. Provide the Reference files name.
+$readmemb("test_cases_tree.txt", test_vectors); 									// Read vectors. Provide the Reference files name.
 
-$readmemb("sign_bits_west.txt", sign_bits_vectors); 
+$readmemb("sign_bits_tree.txt", sign_bits_vectors); 
 
 
 
@@ -159,28 +159,27 @@ begin
 
 # 3 ;																				//Provide some delay.
 
-
-vectornum = vectornum + 1;															// Increment the vector number.
-
-	if (vectornum < 1717)															// Check whether we have reached to the last line in the test cases file. If not print the outputs in a file.
+	if(rst)																				// 	Skip for reset.																													
 	begin
-	
-	f = $fopen("encoded_ecg.txt", "a+");											// Open file in append mode.
-	
-	$fwrite(f, "%50b_%7b_%b_%4b_%3b\n", encoded_ECG, sizeof_encoded_ECG, valid_op, sign_bits_out, sizeof_sign_bits_out);
-	
-	$fclose(f);
 
-	
-	
-	
-		if(rst)																		// 	Skip for reset.																													
+	vectornum = vectornum + 1;															// Increment the vector number.
+
+		if (vectornum < 5725)															// Check whether we have reached to the last line in the test cases file. If not print the outputs in a file.
 		begin
+		
+		f = $fopen("encoded_ecg_tree.txt", "a+");											// Open file in append mode.
+		
+		$fwrite(f, "%50b_%7b_%b_%4b_%3b\n", encoded_ECG, sizeof_encoded_ECG, valid_op, sign_bits_out, sizeof_sign_bits_out);
+		
+		$fclose(f);
 
+		
+	
+	
 			if((encoded_ECG !== encoded_ECG_expected) || (sizeof_encoded_ECG !== sizeof_encoded_ECG_expected) || (valid_op !== valid_op_expected ) || (sign_bits_out !== sign_bits_out_expected) || (sizeof_sign_bits_out !== sizeof_sign_bits_out_expected))									// Check for Mismatches in generated outputs and expected outputs from the reference file.
 			begin
 			
-			h = $fopen("Errors.txt", "a+");
+			h = $fopen("Errors_tree.txt", "a+");
 			
 			$fwrite(h, " Error: at line %d ,%50b (%50b expected) , %7b (%7b expected) , %b (%b expected) , %4b (%4b expected) , %3b (%3b expected) \n", (vectornum),encoded_ECG,encoded_ECG_expected, sizeof_encoded_ECG, sizeof_encoded_ECG_expected, valid_op, valid_op_expected, sign_bits_out, sign_bits_out_expected, sizeof_sign_bits_out, sizeof_sign_bits_out_expected);				//In a file, print the line at which mismatch is encountered. Along with the generated and expected outputs.
 			
@@ -192,27 +191,27 @@ vectornum = vectornum + 1;															// Increment the vector number.
 			
 		end
 
-	end
+	
 
 
 	
 	
-	else								// If reached to the last line in the reference file, print "simulation completed" in the Errors file. Along with the number of mismatches encountered.
-	begin
+		else								// If reached to the last line in the reference file, print "simulation completed" in the Errors file. Along with the number of mismatches encountered.
+		begin
 
-	h = $fopen("Errors.txt", "a+");
-	
-	$fwrite(h, " \n Simulation completed with %d errors",errors );
-	
-	$fclose(h);
+		h = $fopen("Errors_tree.txt", "a+");
+		
+		$fwrite(h, " \n Simulation completed with %d errors",errors );
+		
+		$fclose(h);
 
-	$finish;					
+		$finish;					
+
+		end
 
 	end
 
 end
-
-
 
 
 
